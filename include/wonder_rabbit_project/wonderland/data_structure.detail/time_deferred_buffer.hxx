@@ -21,7 +21,6 @@ namespace wonder_rabbit_project
       , class T_clock   = std::chrono::steady_clock
       >
       class time_deferred_buffer_t
-        : public std::enable_shared_from_this< time_deferred_buffer_t< T_element, T_clock > >
       {
       public:
         using type              = time_deferred_buffer_t< T_element, T_clock >;
@@ -136,7 +135,7 @@ namespace wonder_rabbit_project
           update_impl();
         }
         
-        auto auto_update( bool enable )
+        auto auto_update( bool enable = true )
           -> void
         {
 #ifndef EMSCRIPTEN
@@ -146,20 +145,14 @@ namespace wonder_rabbit_project
               return;
             
             _auto_update_thread_continue = true;
-            std::weak_ptr< type > wp( this -> shared_from_this() );
             
             _auto_update_thread = std::thread
-            ( [ wp ]
+            ( [ this ]
               {
-                while ( not wp.expired() )
+                while ( this -> _auto_update_thread_continue )
                 {
-                  auto sp = wp.lock();
-                  
-                  if ( not sp -> _auto_update_thread_continue )
-                    return;
-                  
-                  sp -> update();
-                  std::this_thread::sleep_for( sp -> delay() );
+                  this -> update();
+                  std::this_thread::sleep_for( this -> delay() );
                 }
               }
             );

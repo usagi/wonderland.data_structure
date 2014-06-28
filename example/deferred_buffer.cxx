@@ -33,4 +33,5 @@ auto main()
     
     std::cout << "to dtor\n";
   }
+  std::cout << "to exit\n";
 }
