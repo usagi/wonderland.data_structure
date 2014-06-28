@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-project(multi_dimensional_array_helper)
-
-set(TARGET "multi_dimensional_array_helper")
-set(SOURCE "multi_dimensional_array_helper.cxx")
+project(example)
 
 if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
 
@@ -70,7 +67,12 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
-message(" * target: ${TARGET}")
-message(" * source: ${SOURCE}")
-
-add_executable(${TARGET} ${SOURCE})
+if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
+  add_executable(multi_dimensional_array_helper.html multi_dimensional_array_helper.cxx)
+  add_executable(deferred_buffer.html deferred_buffer.cxx)
+else()
+  find_package(Threads)
+  add_executable(multi_dimensional_array_helper multi_dimensional_array_helper.cxx)
+  add_executable(deferred_buffer deferred_buffer.cxx)
+  target_link_libraries(deferred_buffer ${CMAKE_THREAD_LIBS_INIT})
+endif()
