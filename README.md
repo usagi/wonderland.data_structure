@@ -10,6 +10,7 @@ C++ std only
 ## Example
 
 - [example/multi_dimensional_array_helper.cxx](example/multi_dimensional_array_helper.cxx)
+- [example/time_deferred_buffer.cxx](example/time_deferred_buffer.cxx)
 
 ## License
 
