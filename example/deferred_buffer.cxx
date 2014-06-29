@@ -18,17 +18,29 @@ auto main()
     );
     
     b -> delay( std::chrono::milliseconds( 500 ) );
+    
+// note: time_deferred_buffer_t::auto_update is not support for emscripten yet.
+#ifndef EMSCRIPTEN
     b -> push_with_update( false );
     b -> auto_update( true );
+#endif
     
-    auto counter = 0ull;
+    constexpr auto interval_in_ms = 100;
+    constexpr auto end_of_loops = 15u;
     
-    while( counter < 20 )
+    auto counter = 0u;
+
+    const auto step = [&]
     {
       std::cout << "push: " << counter << "\n";
       b -> push( std::to_string( counter ) );
       ++counter;
-      std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
+    };
+    
+    while( counter < end_of_loops )
+    {
+      step();
+      std::this_thread::sleep_for( std::chrono::milliseconds( interval_in_ms ) );
     }
     
     std::cout << "to dtor\n";

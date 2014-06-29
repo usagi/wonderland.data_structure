@@ -8,6 +8,8 @@ if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
   
   set(CMAKE_CXX_COMPILER_ID "Emscripten")
   
+  set(CMAKE_CXX_FLAGS "-s DISABLE_EXCEPTION_CATCHING=0 ${CMAKE_CXX_FLAGS}")
+  
   set(CMAKE_CXX_FLAGS       "-std=c++11 ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS            "-Wall ${CMAKE_CXX_FLAGS}")
   set(CMAKE_CXX_FLAGS "-pedantic-errors ${CMAKE_CXX_FLAGS}")

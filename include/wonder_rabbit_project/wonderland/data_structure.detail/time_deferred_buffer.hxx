@@ -4,9 +4,12 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#ifndef EMSCRIPTEN
-  #include <thread>
-#else
+
+#include <thread>
+
+#ifdef EMSCRIPTEN
+  #include <sstream>
+  #include <emscripten/emscripten.h>
 #endif
 
 namespace wonder_rabbit_project
@@ -47,13 +50,23 @@ namespace wonder_rabbit_project
 #ifndef EMSCRIPTEN
         std::thread _auto_update_thread;
         bool        _auto_update_thread_continue;
-#else
 #endif
+        
+        time_point_t _last_update_time;
         
         auto update_impl( )
           -> void
         {
-          const auto upper_bound = _data.upper_bound( _now( ) - _delay );
+          const auto n = _now( );
+          const auto upper_bound_time = n - _delay;
+          
+          // it is equals to `if ( n - _last_update_time < _delay )`
+          if ( upper_bound_time < _last_update_time )
+            return;
+          
+          _last_update_time = n;
+          
+          const auto upper_bound = _data.upper_bound( upper_bound_time );
           _flush( _data.cbegin( ), upper_bound );
           _data.erase( _data.cbegin( ), upper_bound );
         }
@@ -66,7 +79,6 @@ namespace wonder_rabbit_project
           , _delay( 0 )
 #ifndef EMSCRIPTEN
           , _auto_update_thread_continue( false )
-#else
 #endif
         {
           push_with_update( true );
@@ -74,9 +86,10 @@ namespace wonder_rabbit_project
         
         ~time_deferred_buffer_t( )
         {
+#ifndef EMSCRIPTEN
           auto_update( false );
-          _flush( _data.cbegin( ), _data.cend( ) );
-          _data.clear( );
+#endif
+          force_flush( );
         }
         
         auto now( const time_function_t& f )
@@ -86,6 +99,17 @@ namespace wonder_rabbit_project
         auto flush( const flush_t& f )
           -> void
         { _flush = f; }
+        
+        auto clear( )
+          -> void
+        { _data.clear(); }
+        
+        auto force_flush()
+          -> void
+        {
+          _flush( _data.cbegin(), _data.cend() );
+          _data.clear();
+        }
         
         auto delay( const duration_t& d )
           -> void
@@ -99,13 +123,13 @@ namespace wonder_rabbit_project
           return _delay;
         }
         
-        auto push_with_update( const bool update )
+        auto push_with_update( const bool enable )
           -> void
         {
-          if ( update )
+          if ( enable )
           {
-            _push_l = [&]( const element_t& value ){ _data.emplace( _now( ), value ); this -> update_impl(); };
-            _push_r = [&]( element_t&& value ){ _data.emplace( _now( ), std::move( value ) ); this -> update_impl(); };
+            _push_l = [&]( const element_t& value ){ _data.emplace( _now( ), value ); this -> update_impl( ); };
+            _push_r = [&]( element_t&& value ){ _data.emplace( _now( ), std::move( value ) ); this -> update_impl( ); };
           }
           else
           {
@@ -138,7 +162,9 @@ namespace wonder_rabbit_project
         auto auto_update( bool enable = true )
           -> void
         {
-#ifndef EMSCRIPTEN
+#ifdef EMSCRIPTEN
+          std::cerr << "`time_deferred_buffer_t::auto_update` is not support for Emscripten yet.\n";
+#else
           if ( enable )
           {
             if ( _auto_update_thread.joinable() )
@@ -165,11 +191,10 @@ namespace wonder_rabbit_project
               _auto_update_thread.join();
             }
           }
-#else
-          
 #endif
         }
       };
+      
     }
   }
 }
